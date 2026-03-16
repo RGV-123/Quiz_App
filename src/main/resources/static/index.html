@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 700px;
+            max-width: 95%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            background: #f0f0f0;
+            color: #555;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Forms */
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Question Card */
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            border-left: 5px solid #667eea;
+        }
+
+        .question-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .option-label:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .option-label input[type="radio"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        /* Result */
+        .result {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .score {
+            font-size: 4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* All Questions Table */
+        .q-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .q-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .q-item strong {
+            color: #333;
+        }
+
+        .q-item small {
+            color: #888;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .row > div {
+            flex: 1;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Quiz Application</h1>
+        <p class="subtitle">Test Your Knowledge!</p>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('add')">➕ Add Question</button>
+            <button class="tab-btn" onclick="showTab('all')">📋 All Questions</button>
+            <button class="tab-btn" onclick="showTab('create')">🎯 Create Quiz</button>
+            <button class="tab-btn" onclick="showTab('play')">🎮 Play Quiz</button>
+        </div>
+
+        <!-- ADD QUESTION SECTION -->
+        <div id="add" class="section active">
+            <h2>Add a New Question</h2>
+            <div id="addMsg"></div>
+
+            <label>Question Title</label>
+            <input type="text" id="qTitle" placeholder="Enter your question...">
+
+            <div class="row">
+                <div>
+                    <label>Option 1</label>
+                    <input type="text" id="opt1" placeholder="Option 1">
+                </div>
+                <div>
+                    <label>Option 2</label>
+                    <input type="text" id="opt2" placeholder="Option 2">
+                </div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label>Option 3</label>
+                    <input type="text" id="opt3" placeholder="Option 3">
+                </div>
+                <div>
+                    <label>Option 4</label>
+                    <input type="text" id="opt4" placeholder="Option 4">
+                </div>
+            </div>
+
+            <label>Correct Answer</label>
+            <input type="text" id="rightAns" placeholder="Type the correct option text">
+
+            <div class="row">
+                <div>
+                    <label>Category</label>
+                    <input type="text" id="category" placeholder="e.g., Java, Python, General">
+                </div>
+                <div>
+                    <label>Difficulty</label>
+                    <select id="difficulty">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="addQuestion()">Add Question ➕</button>
+        </div>
+
+        <!-- ALL QUESTIONS SECTION -->
+        <div id="all" class="section">
+            <h2>All Questions</h2>
+            <div id="allMsg"></div>
+            <button class="btn btn-primary" onclick="loadQuestions()" style="margin-bottom:15px">🔄 Refresh</button>
+            <div id="questionList" class="q-list">
+                <p class="loading">Click Refresh to load questions...</p>
+            </div>
+        </div>
+
+        <!-- CREATE QUIZ SECTION -->
+        <div id="create" class="section">
+            <h2>Create a New Quiz</h2>
+            <div id="createMsg"></div>
+
+            <label>Quiz Title</label>
+            <input type="text" id="quizTitle" placeholder="e.g., Java Basics Quiz">
+
+            <label>Category</label>
+            <input type="text" id="quizCategory" placeholder="e.g., Java">
+
+            <label>Number of Questions</label>
+            <input type="number" id="numQ" placeholder="e.g., 3" min="1" max="20">
+
+            <button class="btn btn-success" onclick="createQuiz()">Create Quiz 🎯</button>
+        </div>
+
+        <!-- PLAY QUIZ SECTION -->
+        <div id="play" class="section">
+            <h2>Play Quiz</h2>
+            <div id="playMsg"></div>
+
+            <label>Enter Quiz ID</label>
+            <input type="number" id="quizId" placeholder="e.g., 1" min="1">
+            <button class="btn btn-primary" onclick="loadQuiz()" style="margin-bottom:20px">Load Quiz 📝</button>
+
+            <div id="quizQuestions"></div>
+            <div id="submitArea"></div>
+            <div id="resultArea"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE = "http://localhost:8080";
+
+        // ========== TAB SWITCHING ==========
+        function showTab(tabId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showMessage(elementId, text, type) {
+            document.getElementById(elementId).innerHTML =
+                `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => document.getElementById(elementId).innerHTML = '', 4000);
+        }
+
+        // ========== ADD QUESTION ==========
+        async function addQuestion() {
+            const question = {
+                questionTitle: document.getElementById('qTitle').value,
+                option1: document.getElementById('opt1').value,
+                option2: document.getElementById('opt2').value,
+                option3: document.getElementById('opt3').value,
+                option4: document.getElementById('opt4').value,
+                rightAnswer: document.getElementById('rightAns').value,
+                category: document.getElementById('category').value,
+                difficultyLevel: document.getElementById('difficulty').value
+            };
+
+            if (!question.questionTitle || !question.option1 || !question.rightAnswer || !question.category) {
+                showMessage('addMsg', '⚠️ Please fill all required fields!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BASE}/question/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(question)
+                });
+
+                if (res.ok) {
+                    showMessage('addMsg', '✅ Question Added Successfully!', 'success');
+                    // Clear form
+                    ['qTitle','opt1','opt2','opt3','opt4','rightAns','category'].forEach(
+                        id => document.getElementById(id).value = ''
+                    );
+                } else {
+                    showMessage('addMsg', '❌ Failed to add question!', 'error');
+                }
+            } catch (e) {
+                showMessage('addMsg', '❌ Error: Cannot connect to server!', 'error');
+            }
+        }
+
+        // ========== LOAD ALL QUESTIONS ==========
+        async function loadQuestions() {
+            try {
+                const res = await fetch(`${BASE}/question/allQuestions`);
+                const questions = await res.json();
+
+                if (questions.length === 0) {
+                    document.getElementById('questionList').innerHTML =
+                        '<p class="loading">No questions found. Add some questions first!</p>';
+                    return;
+                }
+
+                let html = '';
+                questions.forEach((q, i) => {
+                    html += `
+                        <div class="q-item">
+                            <strong><span class="question-number">Q${i+1}.</span> ${q.questionTitle}</strong><br>
+                            <small>
+                                A) ${q.option1} | B) ${q.option2} | C) ${q.option3} | D) ${q.option4}<br>
+                                ✅ Answer: ${q.rightAnswer} | 📁 ${q.category} | ⭐ ${q.difficultyLevel}
+                            </small>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('questionList').innerHTML = html;
+                showMessage('allMsg', `✅ Loaded ${questions.length} questions!`, 'info');
+            } catch (e) {
+                showMessage('allMsg', '❌ Error loading questions!', 'error');
+            }
+        }
+
+        // ========== CREATE QUIZ ==========
+        async function createQuiz() {
+            const title = document.getElementById('quizTitle').value;
+            const category = document.getElementById('quizCategory').value;
+            const numQ = document.getElementById('numQ').value;
+
+            if (!title || !category || !numQ) {
+                showMessage('createMsg', '⚠️ Please fill all fields!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(
+                    `${BASE}/quiz/create?category=${category}&numQ=${numQ}&title=${title}`,
+                    { method: 'POST' }
+                );
+
+                if (res.ok) {
+                    showMessage('createMsg', `✅ Quiz "${title}" Created Successfully! 🎉`, 'success');
+                    document.getElementById('quizTitle').value = '';
+                    document.getElementById('quizCategory').value = '';
+                    document.getElementById('numQ').value = '';
+                } else {
+                    showMessage('createMsg', '❌ Failed! Check category name & question count.', 'error');
+                }
+            } catch (e) {
+                showMessage('createMsg', '❌ Error: Cannot connect to server!', 'error');
+            }
+        }
+
+        // ========== LOAD QUIZ ==========
+        let currentQuizId = null;
+        let quizData = [];
+
+        async function loadQuiz() {
+            const id = document.getElementById('quizId').value;
+            if (!id) {
+                showMessage('playMsg', '⚠️ Enter a Quiz ID!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BASE}/quiz/get/${id}`);
+                if (!res.ok) {
+                    showMessage('playMsg', '❌ Quiz not found!', 'error');
+                    return;
+                }
+
+                quizData = await res.json();
+                currentQuizId = id;
+
+                let html = '';
+                quizData.forEach((q, i) => {
+                    html += `
+                        <div class="question-card">
+                            <h3><span class="question-number">Question ${i+1}</span></h3>
+                            <h3>${q.questionTitle}</h3>
+                            <div class="options">
+                                <label class="option-label">
+                                    <input type="radio" name="q${q.id}" value="${q.option1}">
+                                    ${q.option1}
+                                </label>
+                                <label class="option-label">
+                                    <input type="radio" name="q${q.id}" value="${q.option2}">
+                                    ${q.option2}
+                                </label>
+                                <label class="option-label">
+                                    <input type="radio" name="q${q.id}" value="${q.option3}">
+                                    ${q.option3}
+                                </label>
+                                <label class="option-label">
+                                    <input type="radio" name="q${q.id}" value="${q.option4}">
+                                    ${q.option4}
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('quizQuestions').innerHTML = html;
+                document.getElementById('submitArea').innerHTML =
+                    '<button class="btn btn-warning" onclick="submitQuiz()">Submit Quiz 🚀</button>';
+                document.getElementById('resultArea').innerHTML = '';
+                showMessage('playMsg', `✅ Quiz loaded! ${quizData.length} questions. Good luck! 🍀`, 'info');
+            } catch (e) {
+                showMessage('playMsg', '❌ Error loading quiz!', 'error');
+            }
+        }
+
+        // ========== SUBMIT QUIZ ==========
+        async function submitQuiz() {
+            const responses = [];
+
+            quizData.forEach(q => {
+                const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+                responses.push({
+                    id: q.id,
+                    response: selected ? selected.value : ""
+                });
+            });
+
+            try {
+                const res = await fetch(`${BASE}/quiz/submit/${currentQuizId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(responses)
+                });
+
+                const score = await res.json();
+
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="result">
+                        <h2>Your Result</h2>
+                        <div class="score">${score} / ${quizData.length}</div>
+                        <p style="margin-top:15px; color:#888; font-size:1.2em">
+                            ${score === quizData.length ? '🎉 Perfect Score! Amazing!' :
+                              score >= quizData.length/2 ? '👍 Good Job! Keep Learning!' :
+                              '📚 Keep Practicing! You Got This!'}
+                        </p>
+                    </div>
+                `;
+
+                document.getElementById('submitArea').innerHTML = '';
+            } catch (e) {
+                showMessage('playMsg', '❌ Error submitting quiz!', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
