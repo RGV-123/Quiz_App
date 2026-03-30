@@ -1,19 +1,24 @@
 package com.quiz_app.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
 @Entity
+@Table(
+    uniqueConstraints = @UniqueConstraint(
+        columnNames = {"questionTitle", "category"}
+    )
+)
 public class Question {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    
+    @Column(length = 500)
     private String questionTitle;
+    
     private String option1;
     private String option2;
     private String option3;

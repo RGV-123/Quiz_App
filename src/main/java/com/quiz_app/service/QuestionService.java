@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,17 +25,50 @@ public class QuestionService {
     }
 
     public ResponseEntity<String> addQuestion(Question question) {
+        // Check for duplicate
+        List<Question> existing = questionDao.findByCategory(question.getCategory());
+        for (Question q : existing) {
+            if (q.getQuestionTitle().equals(question.getQuestionTitle())) {
+                return new ResponseEntity<>("Question already exists!", HttpStatus.BAD_REQUEST);
+            }
+        }
         questionDao.save(question);
         return new ResponseEntity<>("Question Added Successfully", HttpStatus.CREATED);
     }
 
-    // BULK UPLOAD
+    // BULK UPLOAD — Skip Duplicates
     public ResponseEntity<String> addMultipleQuestions(List<Question> questions) {
         try {
-            questionDao.saveAll(questions);
-            return new ResponseEntity<>(questions.size() + " Questions Added Successfully!", HttpStatus.CREATED);
+            List<Question> allExisting = questionDao.findAll();
+            List<Question> newQuestions = new ArrayList<>();
+            int skipped = 0;
+
+            for (Question q : questions) {
+                boolean isDuplicate = false;
+                for (Question existing : allExisting) {
+                    if (existing.getQuestionTitle().equals(q.getQuestionTitle()) &&
+                        existing.getCategory().equals(q.getCategory())) {
+                        isDuplicate = true;
+                        skipped++;
+                        break;
+                    }
+                }
+                if (!isDuplicate) {
+                    newQuestions.add(q);
+                }
+            }
+
+            if (!newQuestions.isEmpty()) {
+                questionDao.saveAll(newQuestions);
+            }
+
+            String message = newQuestions.size() + " Questions Added Successfully!";
+            if (skipped > 0) {
+                message += " (" + skipped + " duplicates skipped)";
+            }
+            return new ResponseEntity<>(message, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to add questions: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Failed: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -48,12 +82,12 @@ public class QuestionService {
         }
     }
 
-    // ===== NEW: Get all categories =====
+    // GET ALL CATEGORIES
     public ResponseEntity<List<String>> getAllCategories() {
         return new ResponseEntity<>(questionDao.findAllCategories(), HttpStatus.OK);
     }
 
-    // ===== NEW: Count questions by category =====
+    // COUNT BY CATEGORY
     public ResponseEntity<Integer> getQuestionCountByCategory(String category) {
         return new ResponseEntity<>(questionDao.countByCategory(category), HttpStatus.OK);
     }
