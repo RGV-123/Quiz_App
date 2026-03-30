@@ -12,7 +12,7 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     private String title;
 
     @ManyToMany(fetch = FetchType.EAGER)
