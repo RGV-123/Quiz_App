@@ -24,4 +24,10 @@ public interface QuestionDao extends JpaRepository<Question, Integer> {
 
     @Query(value = "SELECT COUNT(*) FROM question WHERE category=:category", nativeQuery = true)
     Integer countByCategory(String category);
+
+    @Query(value = "SELECT * FROM question q WHERE q.category=:category ORDER BY RAND()", nativeQuery = true)
+    List<Question> findAllQuestionsByCategory(String category);
+
+    @Query(value = "SELECT * FROM question q WHERE q.category=:category AND q.difficultylevel=:difficulty ORDER BY RAND()", nativeQuery = true)
+    List<Question> findAllQuestionsByCategoryAndDifficulty(String category, String difficulty);
 }

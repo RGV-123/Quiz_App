@@ -726,13 +726,25 @@
                             </select>
                         </div>
                         <div>
-                            <label>Number of Questions</label>
-                            <select id="numQuestionsSelect">
-                                <option value="5">5 Questions</option>
-                                <option value="10">10 Questions</option>
-                                <option value="15">15 Questions</option>
-                                <option value="20">20 Questions</option>
-                            </select>
+                            <<label>Number of Questions</label>
+                                <select id="numQuestionsSelect" onchange="handleQuestionCount()">
+                                    <option value="5">5 Questions</option>
+                                    <option value="10">10 Questions</option>
+                                    <option value="15">15 Questions</option>
+                                    <option value="20">20 Questions</option>
+                                    <option value="25">25 Questions</option>
+                                    <option value="30">30 Questions</option>
+                                    <option value="50">50 Questions</option>
+                                    <option value="all">All Questions</option>
+                                    <option value="custom">Custom Number...</option>
+                                </select>
+
+                                <div id="customCountDiv" style="display:none; margin-top:10px;">
+                                    <label>Enter Number of Questions</label>
+                                    <input type="number" id="customCount" placeholder="e.g., 12" min="1" max="500">
+                                </div>
+
+                                <p style="color:#888; font-size:13px; margin-top:8px;" id="availableCount"></p>
                         </div>
                     </div>
                     <button class="btn btn-success" onclick="startQuiz()">Start Quiz 🚀</button>
@@ -982,11 +994,21 @@
             }
         }
 
-        function selectCategory(category) {
+        async function selectCategory(category) {
             selectedCategory = category;
             document.getElementById('selectedCategoryName').textContent = category;
             document.getElementById('categorySelection').style.display = 'none';
             document.getElementById('quizSetup').style.display = 'block';
+
+            // Show available question count
+            try {
+                var res = await fetch(BASE + '/question/count/' + category);
+                var count = await res.json();
+                document.getElementById('availableCount').textContent =
+                    '📊 ' + count + ' questions available in ' + category;
+            } catch (e) {
+                document.getElementById('availableCount').textContent = '';
+            }
         }
 
         function backToCategories() {
@@ -1007,21 +1029,47 @@
             document.getElementById('submitArea').innerHTML = '';
         }
 
+        function handleQuestionCount() {
+            var select = document.getElementById('numQuestionsSelect');
+            var customDiv = document.getElementById('customCountDiv');
+
+            if (select.value === 'custom') {
+                customDiv.style.display = 'block';
+            } else {
+                customDiv.style.display = 'none';
+            }
+        }
+
         async function startQuiz() {
-            const difficulty = document.getElementById('difficultySelect').value;
-            const numQ = document.getElementById('numQuestionsSelect').value;
-            const title = `${selectedCategory}_${Date.now()}`;
+            var difficulty = document.getElementById('difficultySelect').value;
+            var selectValue = document.getElementById('numQuestionsSelect').value;
+            var numQ;
+
+            // Handle different selection types
+            if (selectValue === 'all') {
+                numQ = 9999; // Large number — server will return all available
+            } else if (selectValue === 'custom') {
+                numQ = document.getElementById('customCount').value;
+                if (!numQ || numQ < 1) {
+                    showMessage('playMsg', '⚠️ Please enter a valid number!', 'error');
+                    return;
+                }
+            } else {
+                numQ = selectValue;
+            }
+
+            var title = selectedCategory + '_' + Date.now();
 
             showMessage('playMsg', '⏳ Creating quiz...', 'info');
 
             try {
-                const res = await fetch(
-                    `${BASE}/quiz/createWithDifficulty?category=${selectedCategory}&difficulty=${difficulty}&numQ=${numQ}&title=${title}`,
+                var res = await fetch(
+                    BASE + '/quiz/createWithDifficulty?category=' + selectedCategory + '&difficulty=' + difficulty + '&numQ=' + numQ + '&title=' + title,
                     { method: 'POST' }
                 );
 
                 if (!res.ok) {
-                    const error = await res.text();
+                    var error = await res.text();
                     showMessage('playMsg', '❌ ' + error, 'error');
                     return;
                 }
@@ -1029,7 +1077,8 @@
                 currentQuizId = await res.json();
                 await loadQuizQuestions();
             } catch (e) {
-                showMessage('playMsg', '❌ Error!', 'error');
+                console.error('Start Quiz Error:', e);
+                showMessage('playMsg', '❌ Error creating quiz!', 'error');
             }
         }
 
