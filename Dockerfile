@@ -10,9 +10,7 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# Important: Expose port and use environment variable
 ENV PORT=8080
 EXPOSE ${PORT}
 
-# Start with explicit port binding
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar app.jar"]
